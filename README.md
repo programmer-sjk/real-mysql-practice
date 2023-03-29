@@ -6,7 +6,7 @@
 ## 2장. 설치와 설정
 
 ### 2.3 MySQL 서버 업그레이드
-- MySQL을 업그레이드 하는 방법에는 아래 두 가지 방법을 고려할 수 있다.
+- MySQL을 업그레이드 하는 방법에는 아래 **두 가지 방법**을 고려할 수 있다.
   - MySQL 서버 데이터 파일을 그대로 두고 업그레이드 하는 방법 (In-Place 업그레이드)
   - 서버의 데이터를 SQL이나 데이터로 덤프 후, 새로 업그레이드된 MySQL 서버에서 데이터를 적재하는 방법 (논리적 업그레이드)
   - 인플레이스 업그레이드는 제약사항이 있지만 업그레이드 시간이 단축되며 논리적 업그레이드는 제약사항이 없지만 많은 시간이 소요된다.
@@ -16,11 +16,11 @@
 #### 2.4.4 정적 변수와 동적 변수
 - MySQL 서버의 시스템 변수는 서버가 기동중인 상태에서 변경 가능한지에 따라 동적 변수와 정적 변수로 구분된다.
 - SET 명령어로 변경되는 시스템 변수 값은 설정 파일은 my.cnf (or my.ini)에 반영되는 것은 아니기 때문에 서버가
-재 시작되면 설정값이 초기화 되기 때문에 설정을 영구히 적용하려면 my.cnf 파일을 수정해야 한다.
+재 시작되면 설정값이 초기화 되기 때문에 **설정을 영구히 적용하려면 my.cnf 파일을 수정**해야 한다.
 - **MySQL 8.0 버전**부터 `SET PERSIST` 명령을 통해 시스템 변수를 변경하면서 설정 파일로도 기록 가능하다.
 
 #### 2.4.5 SET PERSIST
-- MySQL 서버의 max_connections 변수는 동시에 접속하는 최대 커넥션 수를 제한하는 동적 변수다.
+- MySQL 서버의 `max_connections` 변수는 동시에 접속하는 최대 커넥션 수를 제한하는 동적 변수다.
 - SET 명령으로 설정을 수정하고 설정파일에 반영하지 않으면 서버 재시작시에 예전의 변수 값으로 MySQL 서버가 실행되고
 이를 통해 장애가 발생할 수 있다. 
 - `SET PERSIST max=connections=5000;` 과 같이 시스템 변수를 변경하면 MySQL 서버는 변경된 값을 즉시 적용함과
@@ -69,13 +69,13 @@ select * from mysql.component;
 show GLOBAL VARIABLES LIKE "validate_password%";
 
 # Variable_name                      | value  | 설명
-validate_password.check_user_name	     ON       
-validate_password.dictionary_file	
-validate_password.length	             8        비밀번호 길이
-validate_password.mixed_case_count     1        최소 1개이상의 대소문자
-validate_password.number_count	       1        최소 1개이상의 숫자
-validate_password.policy	             MEDIUM
-validate_password.special_char_count	 1        최소 1개이상의 특수문자
+validate_password.check_user_name	   |  ON    |   
+validate_password.dictionary_file	   |        |
+validate_password.length	           |  8     |   비밀번호 길이
+validate_password.mixed_case_count   |  1     |   최소 1개이상의 대소문자
+validate_password.number_count	     |  1     |   최소 1개이상의 숫자
+validate_password.policy	           |  MEDIUM|
+validate_password.special_char_count | 1      |  최소 1개이상의 특수문자
 ```
 - 비밀번호 정책은 크게 3가지 중 선택할 수 있으며 기본값은 MEDIUM으로 자동 설정된다.
     - LOW: 비밀번호 길이만 검증
