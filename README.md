@@ -81,3 +81,44 @@ validate_password.special_char_count	 1        최소 1개이상의 특수문자
     - LOW: 비밀번호 길이만 검증
     - MEDIUM: 길이와 숫자와 대소문자와 특수문자의 배합을 검증
     - STRONG: MEDIUM 레벨의 검증 + 금칙어 포함여부 검증
+
+### 3.4 권한
+- 사용자에게 권한을 부여할 때는 GRANT 명령을 사용한다. 아래 여러 예시를 보자.
+```sql
+# 글로벌 권한 (글로벌 권한은 특정 DB나 테이블에 부여할수 없기 때문에 *.*를 사용)
+GRANT SUPER ON *.* TO 'user'@'localhost';
+
+# DB 권한
+GRANT EVENT ON *.* TO 'user'@'localhost';
+GRANT EVENT ON employees.* TO 'user'@'localhost';
+
+# 테이블 권한 (순서대로 전체, 특정 DB, 특정 DB의 테이블 권한 부여가능)
+GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO 'user'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON employees.* TO 'user'@'localhost';
+GRANT SELECT, INSERT, UPDATE, DELETE ON employees.department TO 'user'@'localhost';
+```
+
+### 3.5 역할
+- MySQL 8.0 버전부터 권한을 묶어 역할(Role)을 사용할 수 있게 되었다. 우선 역할을 생성해보자
+```sql
+CREATE ROLE role_emp_read, role_emp_write;
+```
+- CREATE ROLE 명령은 역할만 정의한 것으로 역할이 가질 실질적인 권한을 부여해야 한다.
+```sql
+GRANT SELECT ON employees.* TO role_emp_read;
+GRANT INSERT, UPDATE, DELETE ON employees.* TO role_emp_write;
+```
+- 역할은 그 자체로 사용될 수 없고 계정에 적용되므로 reader, writer 계정을 생성한 뒤에 역할을 부여한다.
+```sql
+CREATE USER reader@'127.0.0.1' IDENTIFIED BY 'password';
+CREATE USER writer@'127.0.0.1' IDENTIFIED BY 'password';
+
+GRANT role_emp_read TO reader@'127.0.0.1';
+GRANT role_emp_read, role_emp_write TO writer@'127.0.0.1';
+```
+- 지금까지 역할을 생성해 권한을 부여하고, 이 역할을 계정에 반영했지만 추가적으로 생성된 역할을 활성화 해야 한다.
+```sql
+SET ROLE 'role_emp_read';
+```
+- 계정과 역할은 MySQL 서버 내부적으로 차이는 없으며 그럼에도 `CREATE ROLE, CREATE USER` 명령을 구분해서 지원하는
+이유는 보안을 강화하는 용도이다.
