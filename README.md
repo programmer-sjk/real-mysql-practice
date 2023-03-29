@@ -34,3 +34,50 @@ RESET PERSIST max_connections;
 # mysqld-auto.cnf 파일의 모든 시스템 변수를 삭제
 RESET PERSIST;
 ```
+
+## 3장. 사용자 및 권한
+- MySQL 8.0 버전부터 권한을 묶어서 관리하는 역할(Role)의 개념이 도입
+
+### 3.1 사용자 식별
+- MySQL은 사용자 계정과 더불어 클라이언트 접속 지점(IP or 도메인)도 계정의 일부가 된다.
+따라서 아래와 같이 계정이 중복될 수 있다.
+```sql
+'svc_id'@'192.168.0.10' (비밀번호 123)
+'svc_id'@'%'            (비밀번호 456)
+```
+- IP 주소가 `192.168.0.10`인 PC에서 svc_id로 접속하면 MySQL은 더 좁은 범위의 계정을 선택하기 때문에 비밀번호 123이 아닌 456을 입력하면 실패하게 된다.
+
+### 3.2 사용자 계정 관리
+
+#### 3.2.1 시스템 계정과 일반 계정
+- MySQL 8.0부터 계정은 SYSTEM_USER 권한을 가진 시스템 계정과 일반 계정으로 구분된다.
+- 보통 시스템 계정은 서버 관리자를 위한 계정이고 일반 계정은 응용 프로그램이나 개발자를 위한 계정이다.
+- 시스템 계정은 시스템 계정과 일반 계정을 관리할 수 있지만 일반 계정은 시스템 계정을 관리할 수 없다.
+
+#### 3.2.2 계정 생성
+- MySQL 5.7 버전까지는 GRANT 명령으로 권한의 부여와 동시에 계정 생성이 가능.
+- 하지만 8.0 버전부터 계정의 생성은 `CREATE USER` 명령으로 권한 부여는 `GRANT` 명령으로 구분한다.
+- 사용자 인증과 비밀번호 측면에서 MySQL 5.7은 패스워드에 대한 해시값을 저장하고 비교하는 방식이라면
+8.0 버전부터는 `Cashing SHA-2 Authentication`이 기본 인증으로 채택되었다. 이방식은 SSL/TLS 또는 RSA 키페어가
+필요하기 때문에 상황에 따라 8.0 버전에서도 예전의 패스워드 비교 방식을 설정할 수 있다.
+
+### 3.3 비밀번호 관리
+- MySQL 서버의 비밀번호 유효기간, 이력 관리를 통한 재사용 금지기능, 비밀번호의 강도를 설정할 수 있다.
+```sql
+INSTALL COMPONENT 'file://component_validate_password';
+select * from mysql.component;
+show GLOBAL VARIABLES LIKE "validate_password%";
+
+# Variable_name                      | value  | 설명
+validate_password.check_user_name	     ON       
+validate_password.dictionary_file	
+validate_password.length	             8        비밀번호 길이
+validate_password.mixed_case_count     1        최소 1개이상의 대소문자
+validate_password.number_count	       1        최소 1개이상의 숫자
+validate_password.policy	             MEDIUM
+validate_password.special_char_count	 1        최소 1개이상의 특수문자
+```
+- 비밀번호 정책은 크게 3가지 중 선택할 수 있으며 기본값은 MEDIUM으로 자동 설정된다.
+    - LOW: 비밀번호 길이만 검증
+    - MEDIUM: 길이와 숫자와 대소문자와 특수문자의 배합을 검증
+    - STRONG: MEDIUM 레벨의 검증 + 금칙어 포함여부 검증
