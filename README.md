@@ -222,7 +222,7 @@ SET ROLE 'role_emp_read';
 - 또한 `innodb-lock-wait-timeout` 시스템 변수를 활성화하면 데드락 상황에서 일정시간이 지나면 자동으로 요청이 실패하도록
 할 수 있다. 따라서 `innodb-deadlock_detect` 변수가 OFF인 상황이라면 `innodb-deadlock_detect` 변수르 기본값보다 낮게 설정해서 사용할 것을 권한다. 
 
-#### 4.2.7 InnoDB 벞 풀
+#### 4.2.7 InnoDB 버퍼 풀
 - InnoDB 스토리지 엔진에서 가장 핵심적인 부분으로 데이터나 인덱스 정보를 메모리에 **캐시해두는** 공간이다.
 - 쓰기 작업을 지연시켜 일괄 작업으로 처리할 수 있게 해주는 버퍼 역할도 같이 한다.
 
