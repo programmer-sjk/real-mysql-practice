@@ -290,23 +290,23 @@ good. 사용자 로그인 -> 질문등록 -> 질문유효성 검사 -> 트랜잭
 ![information_scheam](./images/presentation/information_schema.png)
 ![음](./images/presentation/innodb_locks.png)
 
-### 5.3.1 InnoDB 스토리지 엔진의 잠금
+#### 5.3.1 InnoDB 스토리지 엔진의 잠금
 
-#### 5.3.1.1 레코드 락
+##### 5.3.1.1 레코드 락
 - 레코드를 잠그는 것을 레코드락이라고 하며 InnoDB는 레코드 자체가 아니라 인덱스의 레코드를 잠근다는 특징
 - 인덱스를 설정하지 않더라도 내부적으로 자동생성된 클러스터 인덱스를 이용해 잠금을 설정
 
-#### 5.3.1.2 갭락
+##### 5.3.1.2 갭락
 - 레코드와 인접한 레코드 사이의 간격을 잠그는 것.
 - 인접한 두 레코드 사이에 새로운 레코드가 생성되는 것을 제어한다.
 
-#### 5.3.1.3 넥스트 키락
+##### 5.3.1.3 넥스트 키락
 - 레코드락 + 갭락을 합쳐놓은 형태의 잠금을 넥스트 키락이라고 한다.
 - 갭락이나 넥스트 키락은 MySQL 서버와 복제간의 동일한 데이터를 만들기 위해 사용하며 가능하다면 
 바이너리 로그 포맷을 ROW 형태로 바꿔서 넥스트 키락이나 갭락을 줄이는게 좋다.
-- MySQL 8.0에서는ROW 포맷의 바이너리 로그가 기본으로 설정됨
+- MySQL 8.0에서는 바이너리 로그의 포맷이 기본으로 ROW로 설정됨
 
-#### 5.3.1.4 자동 증가 락(AUTO_INCREMENT 락)
+##### 5.3.1.4 자동 증가 락(AUTO_INCREMENT 락)
 - MySQL에는 AUTO_INCREMENT 칼럼이 사용된 테이블에 동시에 여러 레코드가 삽입되는 경우를 위해
 내부적으로 AUTO_INCREMENT 락이라고 하는 테이블 수준의 잠금을 사용한다.
 - AUTO_INCREMENT 락은 트랜잭션과 관계없이 INSERT나 REPLACE 문장에서 AUTO_INCREMENT 값을 가져오는 순간에만
@@ -323,3 +323,43 @@ good. 사용자 로그인 -> 질문등록 -> 질문유효성 검사 -> 트랜잭
   - 항상 lock을 사용하지 않고 경량화된 래치를 사용.
   - 이떄의 자동 증가 값은 unique를 보장하지만 연속된 값을 보장하진 않는다.
 - `MySQL 5.7 버전에서는 기본값이 1이지만 8.0 버전부터는 기본값이 2로 바뀌었다.`
+
+#### 5.3.2 인덱스와 잠금
+- InnoDB 스토리지 엔진은 변경을 위해 검색된 인덱스의 레코드를 모두 락을 건다.
+- 100 만건의 사용자에 first_name에 인덱스가 걸려있다고 가정하면 first_name에 매칭되는 모든 레코드에 락을 건다.
+- `UPDATE users SET deleted_at = now() WHERE first_name = '정국' AND last_name = '서'`
+
+#### 5.3.3 레코드 잠금 확인 및 해제
+- MySQL 5.1 버전은 `information_schema` DB에 존재하는 `INNODB_TRX`, `INNODB_LOCKS`, `INNODB_LOCK_WAITS` 
+- MySQL 8.0 버전은 `performance_schema`의 `data_locks`, `data_lock_waits` 테이블로 대체된다.
+```text
+--------------------------------------------------------------------------------------------------------
+| waiting_trx_id | waiting_thread | waiting_query | blocking_trx_id | blocking_thread | blocking_query |
+|      1000      |             3  | update...     |          2000   |              2  |       UPDATE.. |
+|      1000      |             3  | update...     |          100    |              1  |       NULL     |
+|      2000      |             2  | update...     |          100    |              1  |       NULL     |
+```
+
+### 5.4 MySQL의 격리수준
+- 트랜잭션의 격리수준이란 여러 트랜잭션이 동시에 처리될 때 하나의 트랜잭션이 다른 트랙잭션에서 변경하거나
+조회하는 데이터를 볼 수 있게 허용할지 말지를 결정하는 것이다.
+- 크게 `READ UNCOMMITED`, `READ COMMITED`, `REPEATABLE READ`, `SERIALIZABLE` 4가지로 나뉘며
+상용 DB는 `READ COMMITED`, `REPEATABLE READ` 중 하나를 사용한다.
+
+#### 5.4.1 READ UNCOMMITED
+- 각 트랜잭션의 변경 내용이 commit, rollback에 상관없이 다른 트랜잭션에서 보인다.
+- 이런 현상을 DIRTY READ라고 하며 정합성 문제가 있는 격리 수준으로 잘 사용되지 않는다.
+
+#### 5.4.2 READ COMMITED
+- 오라클에서 기본으로 사용하는 격리 수준이며 각 트랜잭션에는 COMMIT이 완료된 데이터만 조회가능하다.
+- 한 커넥션에서 데이터를 수정하고 아직 commit 하지 않은 시점에 다른 커넥션이 데이터 조회시 언두 영역에 있는
+백업된 데이터를 가져온다.
+- READ COMMITED 격리 수준은 REPEATABLE READ가 불가능한 문제가 존재
+- REPEATABLE READ란 한 트랜잭션 내에서 SELECT 쿼리는 항상 같은 결과를 가져와야 한다는 뜻.
+  - 이런 형태의 부정합 현상은 하나의 트랜잭션에서 동일 데이터를 읽고 변경하는 작업이 금전적인 처리와 연결되면 문제가 될 수 있다.
+- 트랜잭션 내에서 실행되는 SELECT와 트랜잭션 없이 실행되는 SELECT 차이는?
+  - 격리 수준에 따라 달라진다.
+    - READ COMMITED의 경우 차이는 없다.
+    - REPEATABLE READ의 경우 트랜잭션이 시작되면 다른 트랜잭션에서 데이터 수정 & commit이 발생해도 동일한 결과를 보인다.
+
+#### 5.4.3 REPEATABLE READ
