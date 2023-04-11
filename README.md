@@ -283,8 +283,43 @@ good. 사용자 로그인 -> 질문등록 -> 질문유효성 검사 -> 트랜잭
 - DB 객체의 이름이나 구조를 변경하는 경우 자동으로 획득
 - `mysql> RENAME TABLE users To user_back;` 쿼리 실행시 자동획득
 
-### 5.2 InnoDB 스토리지 엔진 잠금
+### 5.3 InnoDB 스토리지 엔진 잠금
 - InnoDB 스토리지엔진은 레코드 기반의 잠금 방식을 사용해서 뛰어난 동시성 처리를 제공한다.
 - MySQL 서버의 `information_schema` DB에 존재하는 `INNODB_TRX`, `INNODB_LOCKS`, `INNODB_LOCK_WAITS` 테이블을 조인해서
 조회하면 어떤 트랜잭션이 어떤 잠금을 가지고 있고, 어떤 잠금에 의해 대기되고 있는지 정보 파악 가능
 ![information_scheam](./images/presentation/information_schema.png)
+![음](./images/presentation/innodb_locks.png)
+
+### 5.3.1 InnoDB 스토리지 엔진의 잠금
+
+#### 5.3.1.1 레코드 락
+- 레코드를 잠그는 것을 레코드락이라고 하며 InnoDB는 레코드 자체가 아니라 인덱스의 레코드를 잠근다는 특징
+- 인덱스를 설정하지 않더라도 내부적으로 자동생성된 클러스터 인덱스를 이용해 잠금을 설정
+
+#### 5.3.1.2 갭락
+- 레코드와 인접한 레코드 사이의 간격을 잠그는 것.
+- 인접한 두 레코드 사이에 새로운 레코드가 생성되는 것을 제어한다.
+
+#### 5.3.1.3 넥스트 키락
+- 레코드락 + 갭락을 합쳐놓은 형태의 잠금을 넥스트 키락이라고 한다.
+- 갭락이나 넥스트 키락은 MySQL 서버와 복제간의 동일한 데이터를 만들기 위해 사용하며 가능하다면 
+바이너리 로그 포맷을 ROW 형태로 바꿔서 넥스트 키락이나 갭락을 줄이는게 좋다.
+- MySQL 8.0에서는ROW 포맷의 바이너리 로그가 기본으로 설정됨
+
+#### 5.3.1.4 자동 증가 락(AUTO_INCREMENT 락)
+- MySQL에는 AUTO_INCREMENT 칼럼이 사용된 테이블에 동시에 여러 레코드가 삽입되는 경우를 위해
+내부적으로 AUTO_INCREMENT 락이라고 하는 테이블 수준의 잠금을 사용한다.
+- AUTO_INCREMENT 락은 트랜잭션과 관계없이 INSERT나 REPLACE 문장에서 AUTO_INCREMENT 값을 가져오는 순간에만
+락이 걸렸다가 즉시 해제된다. 
+- MySQL 5.1 버전 이상부터 innodb_autoinc_lock_mode 시스템 변수를 이용해 자동 증가락의 작동방식을 변경할 수 있다.
+  - innodb_autoinc_lock_mode = 0
+    - 모든 INSERT 문장은 자동 증가 락을 사용
+  - innodb_autoinc_lock_mode = 1
+    - INSERT 되는 개수를 정확히 예측이 가능할 때 락대신 훨씬 가볍고 빠른 래치를 이용해 처리.
+    - 대량 INSERT 되면 여러개의 자동증가 값을 한번에 할당받아 INSERT 되는 레코드에 사용한다.
+      - INSERT 된 대량의 데이터는 자동 증가값이 누락되지 않고 연속적
+      - 이후에 INSERT 되는 레코드의 자동증가 값은 연속되지 않고 누락된 값이 발생할 수 있다.
+- innodb_autoinc_lock_mode = 2
+  - 항상 lock을 사용하지 않고 경량화된 래치를 사용.
+  - 이떄의 자동 증가 값은 unique를 보장하지만 연속된 값을 보장하진 않는다.
+- `MySQL 5.7 버전에서는 기본값이 1이지만 8.0 버전부터는 기본값이 2로 바뀌었다.`
