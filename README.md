@@ -363,3 +363,15 @@ good. 사용자 로그인 -> 질문등록 -> 질문유효성 검사 -> 트랜잭
     - REPEATABLE READ의 경우 트랜잭션이 시작되면 다른 트랜잭션에서 데이터 수정 & commit이 발생해도 동일한 결과를 보인다.
 
 #### 5.4.3 REPEATABLE READ
+- MySQL InnoDB 스토리지 엔진에서 기본으로 사용하는 격리 수준.
+- MVCC를 위해 언두 영역에 백업된 이전 데이터를 이용해 동일 트랜잭션 내에서 동일한 결과를 보여줄 수 있다.
+- 사실 READ COMMITED도 commit 되기 전의 데이터를 보여주는데 `READ COMMITED`과 `REPEATABLE READ`의 차이는
+언두 영역에 백업된 레코드의 몇 번째 버전까지 찾아 들어가느냐이다.
+![예시](images/presentation/repeatable_read.png)
+- REPEATABLE READ 격리 수준에서도 다음과 같은 부정합이 발생할 수 있다.
+![예시2](images/presentation/phantom_read.png)
+
+##### 5.4.4 SERIALIZABLE
+- 가장 엄격하고 동시 처리 성능도 다른 격리수준보다 떨어진다.
+- 기본적으로 InnoDB 테이블에서 select는 레코드 잠금 없이 실행되는데 이 격리 수준에서는 select도 잠금을 획득해야 한다.
+- InnoDB 스토리지 엔진에선 갭 락과 넥스트 키 락 덕분에 이미 REPEATABLE READ에서도 phantom read 문제가 발생하지 않기 때문에 이 격리 수준을 사용할 필요는 없다.
