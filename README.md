@@ -274,7 +274,7 @@ good. 사용자 로그인 -> 질문등록 -> 질문유효성 검사 -> 트랜잭
   - DB 스키마나 인증 정보를 변경할 순 없지만 데이터의 변경은 허용됨
   
 #### 5.2.2 테이블 락
-- InnoDB 스토리지 엔진에서 레코드 Lock을 제공하기 때문에 스키마를 변경하는 쿼리(DDL)에만 테이블 락이 설정됨.
+- InnoDB 스토리지 엔진에서 레코드 Lock을 제공하기 때문에 **스키마를 변경하는 쿼리(DDL)에만** 테이블 락이 설정됨.
 
 #### 5.2.3 네임드 락
 - 사용자가 지정한 문자열에 대해 락을 획득 및 반납한다.. 그러하다.
@@ -284,13 +284,14 @@ good. 사용자 로그인 -> 질문등록 -> 질문유효성 검사 -> 트랜잭
 - `mysql> RENAME TABLE users To user_back;` 쿼리 실행시 자동획득
 
 ### 5.3 InnoDB 스토리지 엔진 잠금
-- InnoDB 스토리지엔진은 레코드 기반의 잠금 방식을 사용해서 뛰어난 동시성 처리를 제공한다.
+- InnoDB 스토리지엔진은 **레코드 기반의 잠금 방식**을 사용해서 뛰어난 동시성 처리를 제공한다.
 - MySQL 서버의 `information_schema` DB에 존재하는 `INNODB_TRX`, `INNODB_LOCKS`, `INNODB_LOCK_WAITS` 테이블을 조인해서
 조회하면 어떤 트랜잭션이 어떤 잠금을 가지고 있고, 어떤 잠금에 의해 대기되고 있는지 정보 파악 가능
 ![information_scheam](./images/presentation/information_schema.png)
 ![음](./images/presentation/innodb_locks.png)
 
 #### 5.3.1 InnoDB 스토리지 엔진의 잠금
+![lock_종류](./images/presentation/innodb_lock_종류.png)
 
 ##### 5.3.1.1 레코드 락
 - 레코드를 잠그는 것을 레코드락이라고 하며 InnoDB는 레코드 자체가 아니라 인덱스의 레코드를 잠근다는 특징
