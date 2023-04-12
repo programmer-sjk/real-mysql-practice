@@ -324,9 +324,9 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
     - 대량 INSERT 되면 여러개의 자동증가 값을 한번에 할당받아 INSERT 되는 레코드에 사용한다.
       - INSERT 된 대량의 데이터는 자동 증가값이 누락되지 않고 연속적
       - 이후에 INSERT 되는 레코드의 자동증가 값은 연속되지 않고 누락된 값이 발생할 수 있다.
-- innodb_autoinc_lock_mode = 2
-  - 항상 lock을 사용하지 않고 경량화된 래치를 사용.
-  - 이떄의 자동 증가 값은 unique를 보장하지만 연속된 값을 보장하진 않는다.
+  - innodb_autoinc_lock_mode = 2
+    - 항상 lock을 사용하지 않고 경량화된 래치를 사용.
+    - 이떄의 자동 증가 값은 unique를 보장하지만 연속된 값을 보장하진 않는다.
 - `MySQL 5.7 버전에서는 기본값이 1이지만 8.0 버전부터는 기본값이 2로 바뀌었다.`
 
 #### 5.3.2 인덱스와 잠금
@@ -346,7 +346,7 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 ```
 
 ### 5.4 MySQL의 격리수준
-- 트랜잭션의 격리수준이란 여러 트랜잭션이 동시에 처리될 때 하나의 트랜잭션이 다른 트랙잭션에서 변경하거나
+- 트랜잭션의 **격리수준이란** 여러 트랜잭션이 동시에 처리될 때 하나의 트랜잭션이 다른 트랙잭션에서 변경하거나
 조회하는 데이터를 볼 수 있게 허용할지 말지를 결정하는 것이다.
 - 크게 `READ UNCOMMITED`, `READ COMMITED`, `REPEATABLE READ`, `SERIALIZABLE` 4가지로 나뉘며
 상용 DB는 `READ COMMITED`, `REPEATABLE READ` 중 하나를 사용한다.
@@ -370,13 +370,13 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 #### 5.4.3 REPEATABLE READ
 - MySQL InnoDB 스토리지 엔진에서 기본으로 사용하는 격리 수준.
 - `MVCC를` 위해 언두 영역에 백업된 이전 데이터를 이용해 동일 트랜잭션 내에서 동일한 결과를 보여줄 수 있다.
-- 사실 READ COMMITED도 commit 되기 전의 데이터를 보여주는데 `READ COMMITED`과 `REPEATABLE READ`의 차이는
+- 사실 `READ COMMITED`도 commit 되기 전의 데이터를 보여주는데 `READ COMMITED`과 `REPEATABLE READ`의 차이는
 언두 영역에 백업된 레코드의 몇 번째 버전까지 찾아 들어가느냐이다.
 ![예시](images/presentation/repeatable_read.png)
-- REPEATABLE READ 격리 수준에서도 다음과 같은 부정합이 발생할 수 있다.
+- `REPEATABLE READ` 격리 수준에서도 다음과 같은 부정합이 발생할 수 있다.
 ![예시2](images/presentation/phantom_read.png)
 
 ##### 5.4.4 SERIALIZABLE
 - 가장 엄격하고 동시 처리 성능도 다른 격리수준보다 떨어진다.
 - 기본적으로 InnoDB 테이블에서 select는 레코드 잠금 없이 실행되는데 이 격리 수준에서는 select도 잠금을 획득해야 한다.
-- InnoDB 스토리지 엔진에선 갭 락과 넥스트 키 락 덕분에 이미 REPEATABLE READ에서도 phantom read 문제가 발생하지 않기 때문에 이 격리 수준을 사용할 필요는 없다.
+- InnoDB 스토리지 엔진에선 갭 락과 넥스트 키 락 덕분에 이미 `REPEATABLE READ`에서도 `phantom read` 문제가 발생하지 않기 때문에 이 격리 수준을 사용할 필요는 없다.
