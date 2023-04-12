@@ -361,7 +361,6 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 백업된 데이터를 가져온다.
 - `READ COMMITED` 격리 수준은 `REPEATABLE READ`가 불가능한 문제가 존재
 - `REPEATABLE READ`란 한 트랜잭션 내에서 SELECT 쿼리는 항상 같은 결과를 가져와야 한다는 뜻.
-  
   ![non-repeatable](images/presentation/non-repeatable.png)
   - 이런 형태의 부정합 현상은 하나의 트랜잭션에서 동일 데이터를 읽고 변경하는 작업이 금전적인 처리와 연결되면 문제가 될 수 있다.
 - 트랜잭션 내에서 실행되는 SELECT와 트랜잭션 없이 실행되는 SELECT 차이는?
