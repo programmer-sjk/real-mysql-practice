@@ -58,7 +58,7 @@
 - MySQL 8.0 버전에서는 아무런 where 조건 없이 단순히 **테이블 전체 쿼리를 가져오는 쿼리**만 병렬로 처리된다.
   - select count(*) from users;
 
-```text
+```sql
 mysql> SET SESSION innodb_parallel_read_threads=1;
 mysql> SELECT COUNT(*) FROM users;
 1 row in set (0.32 sec)
@@ -262,7 +262,7 @@ order by s.amount;
 
 - MySQL 서버는 주요 작업의 실행 횟수를 상태 변수로 저장한다.
 
-```text
+```sql
 mysql> FLUSH STATUS;
 mysql> SHOW STATUS LIKE 'Sort%';
 
@@ -275,4 +275,70 @@ Sort_scan          1       풀 테이블 스캔을 통해 검색된 결과에 �
 해석하자면 인덱스 없이 풀 테이블 스캔이 발생했고 13번의 병합 정렬이 발생, 정렬된 총 레코드 건수는 300024 개였다.
 ```
 
+### 9.2.4 Group By 처리
 
+- Group By 또한 쿼리가 스트리밍된 처리를 할 수 없게 하는 기능이다.
+  - Group By에 사용된 조건은 인덱스를 사용해서 처리할 수 없으므로 HAVING 절을 튜닝하려고 고민할 필요는 없다.
+- Group By가 인덱스를 사용할 때는 인덱스를 차례로 읽는 인덱스 스캔, 인덱스를 건너뛰면서 읽는 루스 인덱스 스캔 방법을 사용한다.
+- 인덱스를 사용하지 못하는 쿼리에서 GROUP BY 작업은 임시 테이블을 사용한다.
+
+#### 9.2.4.1 인덱스 스캔을 이용하는 GROUP BY
+
+- 조인시, 드라이빙 테이블에 속한 컬럼만 이용해 그루핑할 때 그 칼럼에 인덱스가 있다면, 그 인덱스를 차례대로 읽으면서
+그루핑 작업을 수행하고 그 결과로 조인을 처리한다.
+- Group By가 인덱스를 타더라도 그룹 함수 등의 그룹값을 처리해야 해서 임시 테이블이 필요할 때도 있다.
+- 쿼리 실행 계획 Extra 컬럼에서 별도로 Using Index for group-by나 Using temporary, Using filesort가 표시되지 않는다.
+
+#### 9.2.4.2 루스 인덱스 스캔을 이용하는 Group By
+
+- 인덱스의 레코드를 건너뛰면서 필요한 부분만 읽어서 가져오는 것을 의미한다.
+- Extra 컬럼에 Using Index for group-by가 표기된다.
+
+```sql
+EXPLAIN SELECT emp_no FROM salary WHERE from_date = '1985-03-01' GROUP BY emp_no;
+```
+
+- 인덱스가 (emp_no, from_date)로 생성돼 있을 때, WHERE 절은 인덱스 레인지 스캔 방식을 이용할 수 없는 쿼리다.
+- 하지만 쿼리 실행 계획을 보면 인덱스 레인지 스캔을 이용하게 되는데 MySQL 서버가 어떻게 실행했는지 살펴보자
+  - (emp_no, from_date) 인덱스를 스캔하면서 emp_no 첫 번째 유일값 '10001'을 찾는다.
+  - 인덱스에서 emp_no가 '10001' 이면서 from_date 값이 '1985-03-01' 조건을 합쳐서 인덱스를 검색한다.
+  - (emp_no, from_date) 인덱스에서 emp_no의 다음 유니크한 값을 가져와 반복한다.
+- MySQL 루스 인덱스 스캔 방식은 단일 테이블의 GROUP BY 처리에만 사용될 수 있다.
+  - 인덱스 레인지 스캔은 유니크한 값의 수가 많을수록 성능이 향상된다.
+  - 인덱스 루스 스캔에서는 인덱스의 유니크한 값의 수가 적을수록 성능이 향상된다.
+- 루스 인덱스 스캔을 사용할 수 있는 쿼리
+
+```sql
+SELECT col1, col2 FROM test GROUP BY col1, col2;
+SELECT MIN(col1), MAX(col2) FROM test GROUP BY col1, col2;
+SELECT col1, col2 FROM test WHERE col3 = 'col3' GROUP BY col1, col2;
+```
+
+- 루스 인덱스 스캔을 사용할 수 없는 쿼리패턴
+```sql
+-- MIN(), MAX() 외의 집함 함수가 사용되어서 루스 인덱스 스캔 사용불가
+SELECCT col1, SUM(col2) from test GROUP BY col1;
+
+-- GROUP BY에 사용된 컬럼이 인덱스와 일치하지 않아서 루스 인덱스 스캔 사용불가
+SELECCT col1, col2 from test GROUP BY col2, col3;
+
+-- SELECT 컬럼이 GROUP BY와 일치하지 않아서 루스 인덱스 스캔 사용불가
+SELECCT col1, col3 from test GROUP BY col1, col2;
+```
+
+#### 9.2.4.3 임시 테이블을 사용하는 GROUP BY
+
+- GROUP BY 기준 컬럼이 인덱스를 전혀 사용하지 못할 때 사용된다.
+
+```sql
+EXPLAIN SELECT e.last_name, AVG(s.salary) FROM
+employees e, salary s
+WHERE s.emp_no = e.emp_no GROUP BY e.last_name;
+```
+
+- 이 쿼리에 실행계획 Extra 컬럼에는 Using Temporary가 표시된다. 그 이유는 풀 테이블 스캔이 아니라 인덱스를 전혀 사용할 수
+없는 GROUP BY이기 때문이다.
+- MySQL 8.0 이전 버전에서는 Group By가 사용된 쿼리는, 그루핑된 컬럼을 기준으로 묵시적인 정렬도 함께 수행했다.
+  - 정렬이 필요하지 않다면 ORDER BY NULL을 사용할 것을 권장
+- MySQL 8.0 이후 버전부터는 묵시적 정렬은 수행되지 않고 ORDER BY 키워드를 이용한 명시적인 정렬작업만 수행한다.
+  - 굳이 ORDER BY NULL을 사용할 필요가 없음
