@@ -22,7 +22,7 @@
 #### 2.4.5 SET PERSIST
 - MySQL 서버의 `max_connections` 변수는 동시에 접속하는 최대 커넥션 수를 제한하는 동적 변수다.
 - SET 명령으로 설정을 수정하고 설정파일에 반영하지 않으면 서버 재시작시에 예전의 변수 값으로 MySQL 서버가 실행되고
-이를 통해 장애가 발생할 수 있다. 
+이를 통해 장애가 발생할 수 있다.
 - `SET PERSIST max=connections=5000;` 과 같이 시스템 변수를 변경하면 MySQL 서버는 변경된 값을 즉시 적용함과
 동시에 별도의 설정파일(mysqld-auto.cnf)에 변경 내용을 추가로 기록한다.
 - MySQL 서버가 다시 시작될 때 기본 설정파일(my.cnf) 뿐만 아니라 자동 생성된 mysqld-auto.cnf 파일을 같이 참조해서 시스템 변수를 적용한다.
@@ -69,7 +69,7 @@ select * from mysql.component;
 show GLOBAL VARIABLES LIKE "validate_password%";
 
 # Variable_name                      | value  | 설명
-validate_password.check_user_name	   |  ON    |   
+validate_password.check_user_name	   |  ON    |
 validate_password.dictionary_file	   |        |
 validate_password.length	           |  8     |   비밀번호 길이
 validate_password.mixed_case_count   |  1     |   최소 1개이상의 대소문자
@@ -127,7 +127,7 @@ SET ROLE 'role_emp_read';
 - MySQL 서버는 **엔진과 스토리지 엔진**으로 구분된다.
 ![mysql 전체구조](./images/mysql_structure.png)
 - MySQL 엔진은 클라이언트의 접속 및 쿼리 요청을 처리하는 `커넥션 핸들러`, 최적화된 실행을 위한 `옵티마이저로` 구성된다.
-- MySQL 엔진이 SQL 문장을 분석하고 최적화하는 두뇌라면 실제 데이터를 읽어오는 역할은 `스토리지 엔진`이 한다. 
+- MySQL 엔진이 SQL 문장을 분석하고 최적화하는 두뇌라면 실제 데이터를 읽어오는 역할은 `스토리지 엔진`이 한다.
 
 #### 4.1.2 MySQL 스레딩 구조
 ![mysql 스레딩구조](images/MySQL_%EC%8A%A4%EB%A0%88%EB%94%A9%EA%B5%AC%EC%A1%B0.png)
@@ -198,14 +198,14 @@ SET ROLE 'role_emp_read';
 
 #### 4.2.3 MVCC (Multi Version Concurrency Control)
 - `MVCC`의 가장 큰 목적은 `잠금을 사용하지 않는 일관된 읽기`를 제공하는데 있다. InnoDB는 Undo Log(언두 로그)를
-이용해 이 기능을 구현한다. 
-- 여기서 `멀티 버전`이라 함은 하나의 레코드에 여러개의 버전이 동시에 존재한다는 의미다. 
+이용해 이 기능을 구현한다.
+- 여기서 `멀티 버전`이라 함은 하나의 레코드에 여러개의 버전이 동시에 존재한다는 의미다.
 - 예를 들어 `insert` 쿼리로 데이터를 쓰고 `update` 쿼리로 데이터를 변경한다고 가정하자. `update` 쿼리가 아직 `commit이나`
-`rollback`이 되기전에 해당 데이터를 조회하면 원본 데이터가 조회될까? 아니면 메모리상에 수정된 데이터가 조회될까? 
+`rollback`이 되기전에 해당 데이터를 조회하면 원본 데이터가 조회될까? 아니면 메모리상에 수정된 데이터가 조회될까?
 - 결과는 MySQL 서버에 설정된 `격리 수준(Isolation Level)`에 따라 다르다. 격리수준이 `READ_UNCOMMITED`인 경우 메모리상에
 수정된 데이터를 읽어서 반환하는 반면 `READ_COMMITED`나 그 이상의 격리수준인 경우 아직 `commit` 되지 않았기 때문에 변경되기
 이전 데이터를 보관하는 undo 영역의 데이터를 반환환다.
-- 이렇게 하나의 레코드에 대해 여러 버전을 유지하는 것을 `MVCC`라고 표현한다. 
+- 이렇게 하나의 레코드에 대해 여러 버전을 유지하는 것을 `MVCC`라고 표현한다.
 
 #### 4.2.4 잠금없는 일관된 읽기 (Non-Locking Consistent READ)
 - InnoDB 스토리지 엔진은 `MVCC` 기술을 이용해 잠금을 걸지 않고 읽기 작업을 수행한다. 즉, 다른 트랜잭션의 변경 작업과
@@ -220,7 +220,7 @@ SET ROLE 'role_emp_read';
 - 동시 처리량이 증가하거나 잠금 개수가 많아지면 데드락 감지 스레드가 느려지는데 이를 위해 MySQL 서버는
 `innodb-deadlock_detect` 변수를 제공하며 OFF일 경우 데드락 감지 스레드는 작동하지 않게 된다.
 - 또한 `innodb-lock-wait-timeout` 시스템 변수를 활성화하면 데드락 상황에서 일정시간이 지나면 자동으로 요청이 실패하도록
-할 수 있다. 따라서 `innodb-deadlock_detect` 변수가 OFF인 상황이라면 `innodb-deadlock_detect` 변수르 기본값보다 낮게 설정해서 사용할 것을 권한다. 
+할 수 있다. 따라서 `innodb-deadlock_detect` 변수가 OFF인 상황이라면 `innodb-deadlock_detect` 변수르 기본값보다 낮게 설정해서 사용할 것을 권한다.
 
 #### 4.2.7 InnoDB 버퍼 풀
 - InnoDB 스토리지 엔진에서 가장 핵심적인 부분으로 데이터나 인덱스 정보를 메모리에 **캐시해두는** 공간이다.
@@ -244,11 +244,11 @@ SET ROLE 'role_emp_read';
 #### 4.2.13 InnoDB와 MyISAM, MEMEORY 스토리지 엔진 비교
 - MySQL 5.5 부터는 InnoDB 스토리지 엔진이 기본 스토리지 엔진으로 채택됐지만 시스템 테이블은 여전히 MyISAM 테이블을 사용했다.
 - MySQL 8.0 부터는 기존 MyISAM이 지원하던 특정기능을 InnoDB가 모두 지원하게 되서 이후 버전에서는 MyISAM 스토리지 엔진은 없어질 것으로 예상된다.
-- MyISAM이나 MEMORY 스토리지 엔진의 장점은 MySQL 5.x 버전이라면 의미가 있는 비교겠지만 8.0에서는 더이상 무의미한 
+- MyISAM이나 MEMORY 스토리지 엔진의 장점은 MySQL 5.x 버전이라면 의미가 있는 비교겠지만 8.0에서는 더이상 무의미한
 비교이고 8.0 버전에서는 MySQL의 모든 기능이 InnoDB 스토리지 엔진 기반으로 재편됐다.
 
 ## 5장. 트랜잭션과 잠금
-  
+
 ### 5.1 트랜잭션
 
 #### 5.1.1 MySQL에서의 트랜잭션
@@ -272,7 +272,7 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 - MySQL 8.0 부터는 InnoDB가 기본스토리지 엔진으로 채택되면서 기존의 글로벌 락은 사용하지 않음
 - MySQL 8.0 부터는 조금도 가벼운 글로벌 락인 백업 락이 도입.
   - DB 스키마나 인증 정보를 변경할 순 없지만 데이터의 변경은 허용됨
-  
+
 #### 5.2.2 테이블 락
 - InnoDB 스토리지 엔진에서 레코드 Lock을 제공하기 때문에 **스키마를 변경하는 쿼리(DDL)에만** 테이블 락이 설정됨.
 
@@ -303,19 +303,19 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 
 ##### 5.3.1.3 넥스트 키락
 - 레코드락 + 갭락을 합쳐놓은 형태의 잠금을 넥스트 키락이라고 한다.
-- 갭락이나 넥스트 키락은 **MySQL 서버와 복제간의 동일한 데이터**를 만들기 위해 사용하며 가능하다면 
+- 갭락이나 넥스트 키락은 **MySQL 서버와 복제간의 동일한 데이터**를 만들기 위해 사용하며 가능하다면
 바이너리 로그 포맷을 ROW 형태로 바꿔서 넥스트 키락이나 갭락을 줄이는게 좋다.
 - MySQL 8.0에서는 바이너리 로그의 포맷이 기본으로 ROW로 설정됨
 
-> **바이너리 로그란?** 
-> 
-> - DDL, DML에 의해 변경된 이벤트를 기록하는 이진파일 
+> **바이너리 로그란?**
+>
+> - DDL, DML에 의해 변경된 이벤트를 기록하는 이진파일
 
 ##### 5.3.1.4 자동 증가 락(AUTO_INCREMENT 락)
 - MySQL에는 `AUTO_INCREMENT` 칼럼이 사용된 테이블에 동시에 여러 레코드가 삽입되는 경우를 위해
 내부적으로 **AUTO_INCREMENT 락**이라고 하는 테이블 수준의 잠금을 사용한다.
 - AUTO_INCREMENT 락은 트랜잭션과 관계없이 `INSERT나 REPLACE` 문장에서 `AUTO_INCREMENT` 값을 가져오는 순간에만
-락이 걸렸다가 즉시 해제된다. 
+락이 걸렸다가 즉시 해제된다.
 - MySQL 5.1 버전 이상부터 `innodb_autoinc_lock_mode` 시스템 변수를 이용해 자동 증가락의 작동방식을 변경할 수 있다.
   - innodb_autoinc_lock_mode = 0
     - 모든 INSERT 문장은 자동 증가 락을 사용
@@ -335,7 +335,7 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 - `UPDATE users SET deleted_at = now() WHERE first_name = '정국' AND last_name = '서'`
 
 #### 5.3.3 레코드 잠금 확인 및 해제
-- MySQL 5.1 버전은 `information_schema` DB에 존재하는 `INNODB_TRX`, `INNODB_LOCKS`, `INNODB_LOCK_WAITS` 
+- MySQL 5.1 버전은 `information_schema` DB에 존재하는 `INNODB_TRX`, `INNODB_LOCKS`, `INNODB_LOCK_WAITS`
 - MySQL 8.0 버전은 `performance_schema`의 `data_locks`, `data_lock_waits` 테이블로 대체된다.
 ```text
 --------------------------------------------------------------------------------------------------------
@@ -388,7 +388,7 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 더티 페이지가 더 자주 디스크로 기록되어야 한다.
 
 ### 6.1 페이지 압축
-- 하나의 테이블은 압축된 데이터의 크기가 동일해야 한다는 전제를 가지고 있다. 그래서 압축 기능은 OS별로 펀치 홀이라는 기능을 사용한다. 
+- 하나의 테이블은 압축된 데이터의 크기가 동일해야 한다는 전제를 가지고 있다. 그래서 압축 기능은 OS별로 펀치 홀이라는 기능을 사용한다.
 - 페이지 압축은 그 동작방식이 HW의 파일시스템이 펀치 홀을 지원하지 못하는 경우가 있어 실제 페이지 압축은 많이 사용되지 않는 상태이다.
 
 ### 6.2 테이블 압축
@@ -405,7 +405,7 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 - MySQL 5.7 버전부터 지원된 암호화 기능은 처음에는 데이터 파일에만 암호화가 가능했지만
 8.0 버전부터 데이터 파일, 리두/언두 로그, 바이너리 로그등도 모두 암호화 기능을 지원한다.
 - 데이터 암호화는 보안 감사에서 필수적이며 어플리케이션에서는 특정 컬럼을 암호화하고 DB에서는 테이블 단위로 암호화를 적용한다.
-  
+
 ### 7.1 MySQL 서버의 데이터 암호화
 - MySQL이 제공하는 암호화 기능은 엔진이 관여하지 않는다. 즉 InnoDB 스토리지 엔진의 I/O 계층에서만
 데이터를 암복호화 과정이 실행된다.
@@ -428,4 +428,12 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
   select * from users order by enc_data LIMIT 10;
   ```
 - 반대로 MySQL 서버의 암호화 기능을 사용한다면 인덱스 작업을 모두 처리 후 디스크에 데이터 페이지를 저장할 때만 암호화하기 때문에 이 같은 제약은 없다.
-- 응용 프로그램과 MySQL 서버의 암호화 중 하나만 택한다면 MySQL이다. 
+- 응용 프로그램과 MySQL 서버의 암호화 중 하나만 택한다면 MySQL이다.
+
+## 8장. 인덱스
+
+- [인덱스 정리](./README-index.md)
+
+## 9장. 옵티마이저와 힌트
+
+- [인덱스 정리](./README-optimizer.md)
