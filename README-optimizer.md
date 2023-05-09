@@ -342,3 +342,52 @@ WHERE s.emp_no = e.emp_no GROUP BY e.last_name;
   - 정렬이 필요하지 않다면 ORDER BY NULL을 사용할 것을 권장
 - MySQL 8.0 이후 버전부터는 묵시적 정렬은 수행되지 않고 ORDER BY 키워드를 이용한 명시적인 정렬작업만 수행한다.
   - 굳이 ORDER BY NULL을 사용할 필요가 없음
+
+### 9.2.5 DISTINCT 처리
+
+- 특정 컬럼의 유니크한 값만 조회하기 위해 사용되는데, MIN, MAX 같은 집함함수가 쓰이냐에 따라 영향이 달라진다.
+- DISTINCT 처리가 인덱스를 사용하지 못하게 되면 항상 임시 테이블이 필요하고, Extra 컬럼에는 Using Temporary 메시지가
+출력되지 않는다.
+
+#### 9.2.5.1 SELECT DISTINCT
+
+- 단순히 `SELECT distinct(city) FROM users` 와 같이 집함이 쓰이지 않는다면 GROUP BY와 동일한 방식으로 처리된다.
+- DISINCT는 레코드를 유니크하게 가져오는 것이지, 특정 컬럼만 유니크하게 조회하지 않는다.
+  - `SELECT DISTINCT fist_name, last_name FROM users`
+  - `SELECT DISTINCT(fist_name), last_name FROM users`
+
+#### 9.2.5.2 집합 함수와 함께 사용된 DISTINCT
+
+- COUNT, MIN 등의 집함 함수와 DISTINCT 키워드가 사용되면, 위 형태와는 다르게 동작한다.
+  - 집합 함수 내에서 사용된 DISTINCT는 그 집합 함수의 인자로 전달된 컬럼값이 유니크한 것들을 가져온다.
+
+```sql
+EXPLAIN SELECT COUNT(DISTINCT s.salary)
+FROM employees e, salary s
+WHERE s.emp_no = e.emp_no;
+```
+
+- 위 쿼리는 내부적으로 임시 테이블을 사용하지만 실행 계획에서는 표시되지 않는다.
+  - 이 때 만들어진 임시 테이블의 salary 컬럼에는 유니크 인덱스가 생성되어 레코드 건수가 많다면 상당히 느려질 수 있다.
+- 아래와 같이 쿼리에 `COUNT(DISTINCT)`를 하나 더 추가하면 2개의 임시 테이블을 사용하게 된다.
+
+```sql
+EXPLAIN SELECT COUNT(DISTINCT s.salary), COUNT(e.last_name)
+FROM employees e, salary s
+WHERE s.emp_no = e.emp_no;
+```
+
+- 만약 DISTINCT 처리가 인덱스를 탄다면 인덱스 풀 스캔 or 레인지 스캔하면서 임시 테이블 없이 최적화된 처리를 수행할 수 있다.
+  - `SELECT COUNT(DISTINCT emp_no) FROM employees`
+- DISTINCT가 집합 함수 없이 사용된 경우와 아닌 경우의 차이를 정확히 알자.
+
+```sql
+SELECT DISTINCT fist_name, last_name
+FROM employees;
+
+SELECT COUNT(DISTINCT fist_name), COUNT(last_name)
+FROM employees;
+
+SELECT COUNT(DISTINCT fist_name, last_name)
+FROM employees;
+```
