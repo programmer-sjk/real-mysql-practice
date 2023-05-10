@@ -244,6 +244,7 @@ order by s.amount;
 
 ###### 9.2.3.3.4.1 스트리밍 방식
 
+![스트리밍](images/스트리밍방식.png)
 - 조건에 일치하는 **레코드가 검색될때마다 바로 클라이언트로 전송**해주는 방식으로, 얼마나 많은 레코드를 조회하느냐에 상관없이 빠른 응답 시간을 보장한다.
 - LIMIT 처럼 건수를 제한하는 조건들은 풀테이블 스캔과 같은 쿼리의 처리시간을 상당히 줄여준다.
 - JDBC 같은 라이브러리로 `select * from bigtable` 같은 쿼리를 실행하면 MySQL은 스트리밍 방식으로 동작하지만 JDBC가 모든 결과를 전달받으면 클라이언트에게 전달한다.
@@ -251,6 +252,7 @@ order by s.amount;
 
 ###### 9.2.3.3.4.2 버퍼링 방식
 
+![버퍼링](images/버퍼링방식.png)
 - `order by, group by` 처리는 쿼리의 결과가 스트리밍되는 것을 불가능하게 한다.
   - where 조건에 일치하는 레코드를 모두 가져온 후, 정렬하거나 그루핑해서 차례대로 보내야 하기 때문.
 - MySQL 서버에서 모든 레코드를 검색하고 정렬 작업을 하는 동안 클라이언트는 아무것도 하지 않고 기다려야 하기 때문에 응답속도가 느리다.
@@ -280,15 +282,15 @@ Sort_scan          1       풀 테이블 스캔을 통해 검색된 결과에 �
 
 - Group By 쿼리도 스트리밍된 처리를 할 수 없게 하는 기능이다.
   - Group By에 사용된 조건은 인덱스를 사용해서 처리할 수 없으므로 HAVING 절을 튜닝하려고 고민할 필요는 없다.
-- Group By가 인덱스를 사용할 때는 인덱스를 차례로 읽는 인덱스 스캔, 인덱스를 건너뛰면서 읽는 루스 인덱스 스캔 방법을 사용한다.
-- 인덱스를 사용하지 못하는 쿼리에서 GROUP BY 작업은 임시 테이블을 사용한다.
+- **Group By가 인덱스를 사용할 때는** 인덱스를 차례로 읽는 인덱스 스캔, 인덱스를 건너뛰면서 읽는 루스 인덱스 스캔 방법을 사용한다.
+- **Group By가 인덱스를 사용하지 못할 때는** 임시 테이블을 사용한다.
 
 #### 9.2.4.1 인덱스 스캔을 이용하는 GROUP BY
 
 - 조인시, 드라이빙 테이블에 속한 컬럼만 이용해 그루핑할 때 그 칼럼에 인덱스가 있다면, 그 인덱스를 차례대로 읽으면서
 그루핑 작업을 수행하고 그 결과로 조인을 처리한다.
-- Group By가 인덱스를 타더라도 그룹 함수 등의 그룹값을 처리해야 해서 임시 테이블이 필요할 때도 있다.
-- 쿼리 실행 계획 Extra 컬럼에서 별도로 Using Index for group-by나 Using temporary, Using filesort가 표시되지 않는다.
+- **Group By가 인덱스를 타더라도** 그룹 함수 등의 그룹값을 처리해야 해서 **임시 테이블이 필요할 때도** 있다.
+- 쿼리 실행 계획 Extra 컬럼에서 별도로 Using Index for `group-by나 Using temporary, Using filesort가` 표시되지 않는다.
 
 #### 9.2.4.2 루스 인덱스 스캔을 이용하는 Group By
 
@@ -310,8 +312,8 @@ EXPLAIN SELECT emp_no FROM salary WHERE from_date = '1985-03-01' GROUP BY emp_no
 - 루스 인덱스 스캔을 사용할 수 있는 쿼리
 
 ```sql
-SELECT col1, col2 FROM test GROUP BY col1, col2;
-SELECT MIN(col1), MAX(col2) FROM test GROUP BY col1, col2;
+SELECT col1, col2 FROM test GROUP BY col1, col2;           -- Using index; Using filesort / Using temporary; Using filesort
+SELECT MIN(col1), MAX(col2) FROM test GROUP BY col1, col2; -- Using index; Using temporary; Using filesort
 SELECT col1, col2 FROM test WHERE col3 = 'col3' GROUP BY col1, col2;
 ```
 
@@ -337,17 +339,17 @@ employees e, salary s
 WHERE s.emp_no = e.emp_no GROUP BY e.last_name;
 ```
 
-- 이 쿼리에 실행계획 Extra 컬럼에는 Using Temporary가 표시된다. 그 이유는 풀 테이블 스캔이 아니라 인덱스를 전혀 사용할 수
+- 이 쿼리에 실행계획 Extra 컬럼에는 `Using Temporary`가 표시된다. 그 이유는 풀 테이블 스캔이 아니라 인덱스를 전혀 사용할 수
 없는 GROUP BY이기 때문이다.
-- MySQL 8.0 이전 버전에서는 Group By가 사용된 쿼리는, 그루핑된 컬럼을 기준으로 묵시적인 정렬도 함께 수행했다.
+- **MySQL 8.0 이전 버전에서는** Group By가 사용된 쿼리는, 그루핑된 컬럼을 기준으로 **묵시적인 정렬도** 함께 수행했다.
   - 정렬이 필요하지 않다면 ORDER BY NULL을 사용할 것을 권장
-- MySQL 8.0 이후 버전부터는 묵시적 정렬은 수행되지 않고 ORDER BY 키워드를 이용한 명시적인 정렬작업만 수행한다.
+- **MySQL 8.0 이후 버전부터는** 묵시적 정렬은 수행되지 않고 ORDER BY 키워드를 이용한 **명시적인 정렬작업만** 수행한다.
   - 굳이 ORDER BY NULL을 사용할 필요가 없음
 
 ### 9.2.5 DISTINCT 처리
 
 - 특정 컬럼의 유니크한 값만 조회하기 위해 사용되는데, MIN, MAX 같은 집함함수가 쓰이냐에 따라 영향이 달라진다.
-- DISTINCT 처리가 인덱스를 사용하지 못하게 되면 항상 임시 테이블이 필요하고, Extra 컬럼에는 Using Temporary 메시지가
+- DISTINCT 처리가 **인덱스를 사용하지 못하게 되면 항상 임시 테이블이 필요**하고, Extra 컬럼에는 Using Temporary 메시지가
 출력되지 않는다.
 
 #### 9.2.5.1 SELECT DISTINCT
