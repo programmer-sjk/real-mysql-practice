@@ -436,4 +436,4 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 
 ## 9장. 옵티마이저와 힌트
 
-- [](./README-optimizer.md)
+- [옵티마이저와 힌트](./README-optimizer.md)
