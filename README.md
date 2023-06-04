@@ -467,3 +467,19 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
   - 전체 쿼리의 비용을 계산하는데 필요한 단위 작업들의 비용을 코스트 모델이라고 한다.
   - MySQL 5.7 이전까지는 이런 작업들의 비용을 MySQL 서버 소스 코드에서 상수화해서 사용했다. 하지만 이는 MySQL 서버가 사용하는 HW에 따라 달라질 수 있는 문제점이 있어서 MySQL 5.7 버전부터 각 단위 작업의 비용을 DBMS 관리자가 조정할 수 있도록 바뀌었다. 궁금하면 나중에 더 찾아보자.
 
+### 10.2 실행 계획 확인
+
+- MySQL 서버의 실행계획은 DESC 또는 EXPLAIN 명령으로 확인할 수 있다. MySQL 8.0 버전부터 EXPLAIN 명령에 사용할 수 있는 새로운 옵션이 추가됬는데 살펴보자.
+- 실행 계획 출력 포맷
+  - MySQL 8.0 버전부터 FORMAT 옵션을 통해 실행계획을 JSON, Tree, 단순 테이블 형태로 선택할 수 있다.
+  - 예시
+
+  ```sql
+    EXPLAIN SELECT * FROM
+    EXPLAIN FORMAT=TREE SELECT * FROM TABLE~~
+    EXPLAIN FORMAT=JSON SELECT * FROM TABLE~~
+  ```
+
+- 쿼리의 실행시간 확인
+  - MySQL 8.0 버전부터 쿼리의 실행계획과 단계별 소요된 시간 정보를 확인할 수 있는 EXPLAIN ANALYZE 기능이 추가됐다.
+  - EXPLAIN ANALYZE 명령은 EXPLAIN 명령과 달리 실행계획만 추출하는 것이 아니라 실제 쿼리를 실행하고 사용된 실행계획과 소요된 시간을 보여준다.
