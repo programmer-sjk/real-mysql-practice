@@ -514,37 +514,37 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 #### 10.3.2 select_type
 
 - 각 단위 SELECT가 어떤 타입의 쿼리인지 표시되는 컬럼이다. 표시될 수 있는 값은 아래와 같다.
-  - SIMPLE
+  - **SIMPLE**
     - UNION이나 서브쿼리를 사용하지 않는 단순한 SELECT 쿼리는 SIMPLE로 표현된다.
     - SIMPLE인 단위 쿼리는 하나만 존재한다.
-  - PRIMARY
+  - **PRIMARY**
     - UNION이나 서브쿼리를 사용하는 SELECT 쿼리의 가장 바깥쪽에 있는 단일 쿼리는 PRIMARY로 표시된다.
     - PRIMARY인 단위 쿼리는 하나만 존재한다.
-  - UNION
+  - **UNION**
     - UNION으로 결합하는 단위 SELECT 쿼리 중 두 번째 이후 단위 SELECT 쿼리는 UNION으로 표시된다.
     - UNION의 첫번째 단위 SELECT는 쿼리 결과들을 모아 저장하는 임시테이블(DERIVED)이 된다.
-  - DEPENDENT UNION
+  - **DEPENDENT UNION**
     - DEPENDENT는 UNION, UNION ALL로 결합한 단위 쿼리가 외부 쿼리에 의해 영향을 받는 것을 의미한다.
     - 내부 쿼리가 외부의 값을 참조해서 처리될 때 DEPENDENT 키워드가 표시된다.
-  - UNION RESULT
+  - **UNION RESULT**
     - UNION 결과를 담아두는 테이블을 의미한다. 실제 쿼리가 아니기 때문에 id 값이 부여되지 않는다.
-  - SUBQUERY
+  - **SUBQUERY**
     - FROM 절 외에서 사용되는 서브쿼리를 의미한다.
     - FROM 절에 사용된 서브쿼리는 DERIVED로 표시되고 그 밖의 위치에서 사용된 서브쿼리는 SUBQUERY로 표시된다.
-  - DEPENDENT SUBQUERY
+  - **DEPENDENT SUBQUERY**
     - 서브쿼리가 SELECT 쿼리에서 정의된 컬럼을 사용하는 경우 표시된다.
-  - DERIVED
+  - **DERIVED**
     - MySQL 5.5 버전까지는 FROM 절에 서브쿼리가 사용된 경우 항상 DERIVED로 표시되지만 5.6 버전부터 최적화가 수행되기도 한다.
     - DERIVED는 단위 쿼리의 실행결과로 메모리나 디스크에 임시 테이블을 생성하는 것을 의미한다.
-  - DEPENDENT DERIVED
+  - **DEPENDENT DERIVED**
     - MySQL 8.0 이전에서는 FROM 절의 서브쿼리는 외부 컬럼을 사용할 수 없었는데 8.0 버전부터 레터럴 조인(LATERAL JOIN) 기능이 추가되면서 FROM 절의 서브쿼리가 외부 컬럼을 사용하면 표시된다.
-  - UNCACHEABLE SUBQUERY
+  - **UNCACHEABLE SUBQUERY**
     - 하나의 쿼리에 서브쿼리가 하나만 있더라도 그 서브쿼리가 한 번만 실행되는 건 아니다.
     - 조건이 똑같은 서브쿼리가 실행될 때, 서브쿼리 결과를 캐시 공간에 담을 수 있다.
     - UNCACHEABLE SUBQUERY는 서브쿼리에 포함된 요소에 의해 캐시를 사용하지 못할 경우 표시된다.
-  - UNCACHEABLE UNION
+  - **UNCACHEABLE UNION**
     - 캐시를 사용하지 못하는 UNION
-  - MATERIALIZED
+  - **MATERIALIZED**
     - MySQL 5.6 버전부터 도인된 타입으로 주로 FROM, IN 형태의 쿼리에 사용된 서브쿼리의 최적화를 위해 사용된다.
     - MySQL 5.7 버전부터는 서브쿼리의 내용을 임시 테이블로 구체화(MATERIALIZED는) 한 뒤, 원본 테이블과 조인하는 형태로 최적화되어 처리된다.
 
@@ -561,10 +561,10 @@ id | select_type | table     |
 ```
 
 - 위의 실행 계획을 분석해보자
-  - 첫번째 라인의 table이 <derived2>이면 id가 2인 라인이 먼저 실행되고 그 결과가 파생 테이블로 준비돼어야 한다.
+  - 첫번째 라인의 table이 `derived2`이면 id가 2인 라인이 먼저 실행되고 그 결과가 파생 테이블로 준비돼어야 한다.
   - 세번째 라인은 조회하는 테이블을 읽어서 파생 테이블을 생성한다.
-  - 첫번째, 두번째 라인은 id가 동일한 걸봐서 조인되는 쿼리인걸 알 수 있다. 그런데 <derived2>가 e보다 위에 있기 때문에
-    derived2가 드라이빙 테이블이 되고 e 테이블이 드리븐 테이블이 된다. 즉 <derived2> 테이블을 먼저 읽고 e 테이블을 조인했다.
+  - 첫번째, 두번째 라인은 id가 동일한 걸봐서 조인되는 쿼리인걸 알 수 있다. 그런데 `derived2`가 e보다 위에 있기 때문에
+    derived2가 드라이빙 테이블이 되고 e 테이블이 드리븐 테이블이 된다. 즉 `derived2` 테이블을 먼저 읽고 e 테이블을 조인했다.
 
 #### 10.4.4 partitions
 
