@@ -566,7 +566,7 @@ id | select_type | table     |
   - 첫번째, 두번째 라인은 id가 동일한 걸봐서 조인되는 쿼리인걸 알 수 있다. 그런데 <derived2>가 e보다 위에 있기 때문에
     derived2가 드라이빙 테이블이 되고 e 테이블이 드리븐 테이블이 된다. 즉 <derived2> 테이블을 먼저 읽고 e 테이블을 조인했다.
 
-#### 10.4.4 partitions 컬럼
+#### 10.4.4 partitions
 
 - MySQL 5.7 버전까지는 옵티마이저가 사용하는 파티션 목록을 EXPLAIN PARTITON 명령을 이용해 확인했다.
 - MySQL 8.0 버전부터는 EXPLAIN 명령으로 파티션 관련 계획까지 확인할 수 있다.
@@ -647,12 +647,48 @@ id | select_type | table          | partitons | type |
 - ALL
   - 풀 테이블 스캔으로 위에서 설명한 방식으로 처리할 수 없을때 마지막으로 선택된다.
 
-#### 10.3.6 possible_keys 컬럼
+#### 10.3.6 possible_keys
 
 - 사용될뻔 했던 인덱스 목록이 표시되며 튜닝에 도움이 되지 않으므로 무시
 
-#### 10.3.7 key 컬럼
+#### 10.3.7 key
 
 - 실행된 인덱스를 의미한다.
 - PRIMARY로 표시될 경우 PK가 사용되었다는 의미이며 그 외에는 인덱스의 고유이름이 표기된다.
 - 실행 계획의 type이 ALL인 경우 key 컬럼은 NULL로 표시된다.
+
+#### 10.3.8 key_len
+
+- 인덱스의 레코드에서 몇 바이트를 사용했는지 알려주는 값이다.
+- PK로 (team_id, user_id) 가지는 team_user 테이블이 있다고 가정하자.
+
+```sql
+EXPLAIN SELECT * FROM team_user WHERE team_id = 't001';
+
+id | select_type | table     | key     | key_len |
+--------------------------------------------------
+1  | SIMPLE      | team_user | PRIMARY | 16      |
+```
+
+- team_id 타입이 char(4)이기 때문에 PK의 앞쪽 16 바이트만 유효하게 사용했다는 의미.
+- team_id 컬럼은 utf8mb4 문자 집합을 사용한다. MySQL 서버가 utf8mb4 문자를 위해 메모리를 할당할 때 고정적으로 4 바이트로 계산한다. 그래서 위의 실행 계획해서 key_len 값이 16 바이트 (4 * 4)가 표시된 것이다.
+
+```sql
+EXPLAIN SELECT * FROM team_user WHERE team_id = 't001' AND user_id = 1;
+
+id | select_type | table     | key     | key_len |
+--------------------------------------------------
+1  | SIMPLE      | team_user | PRIMARY | 20      |
+```
+
+- user_id는 정수로 4 바이트를 차지한다. 따라서 key_len 값은 16 + 4로 20바이트를 사용한다.
+
+```sql
+ EXPLAIN SELECT * FROM titles WHERE to_date <= '1988-01-01';
+
+id | select_type | table     | key        | key_len |
+--------------------------------------------------
+1  | SIMPLE      | titles    | idx_todate | 4       |
+```
+
+- MySQL에서 Date 타입은 3 바이트지만 nullable한 컬럼의 경우 NULL인지 아닌지 저장하기 위해 1 바이트를 더 사용한다.
