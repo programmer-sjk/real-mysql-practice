@@ -692,3 +692,40 @@ id | select_type | table     | key        | key_len |
 ```
 
 - MySQL에서 Date 타입은 3 바이트지만 nullable한 컬럼의 경우 NULL인지 아닌지 저장하기 위해 1 바이트를 더 사용한다.
+
+#### 10.3.9 ref 컬럼
+
+- type 값(접근 방법)이 ref 방식일 경우, equal 비교 조건으로 어떤 값이 제공됐는지 보여준다.
+- 상수 값이면 const로 표시되고, 다른 테이블의 컬럼값이면 테이블명과 컬럼값이 표시된다.
+
+```sql
+EXPLAIN SELECT * FROM user u, team_user tu
+WHERE u.id = tu.user_id;
+
+id | select_type | table | type   | ref            |
+----------------------------------------------------
+1  | SIMPLE      | tu    | ALL    | NULL           |
+1  | SIMPLE      | u     | eq_ref | user.tu.user_id|
+```
+
+#### 10.3.10 rows
+
+- 실제 반환하는 레코드 예측치가 아니라, 쿼리를 처리하기 위해 얼마나 많은 레코드를 읽고 체크해야 하는지를 의미한다.
+- rows에 출력되는 값과 실제 쿼리 결과로 반환된 레코드 건수가 일치하지 않는 경우가 많다.
+
+#### 10.3.11 filtered
+
+- 필터링되어 버려지는 레코드 비율이 아니라, 조건절에서 필터링 되고 남은 레코드의 비율을 의미한다.
+
+```sql
+EXPLAIN SELECT * FROM user u, team_user tu
+WHERE use_index_condition_A and no_index_condition_B;
+
+id | select_type | table | type | rows | filtered |
+----------------------------------------------------
+1  | SIMPLE      | tu    | ref  | 233  |16.03     |
+1  | SIMPLE      | u     | ref  | 10   |0.48      |
+```
+
+- 인덱스 A 조건에 일치하는 레코드는 대충 233건, 이 중에서 16.03%가 B 조건에 일치
+- 233건 중에 16.03 퍼센트가 필터링 되어 남으니 대충 37건이 반환될 것을 의미한다.
