@@ -515,11 +515,11 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 
 - 각 단위 SELECT가 어떤 타입의 쿼리인지 표시되는 컬럼이다. 표시될 수 있는 값은 아래와 같다.
   - **SIMPLE**
-    - UNION이나 서브쿼리를 사용하지 않는 단순한 SELECT 쿼리는 SIMPLE로 표현된다.
-    - SIMPLE인 단위 쿼리는 하나만 존재한다.
+    - **UNION이나 서브쿼리를 사용하지 않는** 단순한 SELECT 쿼리는 SIMPLE로 표현된다.
+    - 쿼리가 아무리 복잡하더라도 SIMPLE인 단위 쿼리는 하나만 존재한다.
   - **PRIMARY**
-    - UNION이나 서브쿼리를 사용하는 SELECT 쿼리의 가장 바깥쪽에 있는 단일 쿼리는 PRIMARY로 표시된다.
-    - PRIMARY인 단위 쿼리는 하나만 존재한다.
+    - **UNION이나 서브쿼리를 사용하는** SELECT 쿼리의 가장 바깥쪽에 있는 단일 쿼리는 PRIMARY로 표시된다.
+    - 마찬가지로 PRIMARY인 단위 쿼리는 하나만 존재한다.
   - **UNION**
     - UNION으로 결합하는 단위 SELECT 쿼리 중 두 번째 이후 단위 SELECT 쿼리는 UNION으로 표시된다.
     - UNION의 첫번째 단위 SELECT는 쿼리 결과들을 모아 저장하는 임시테이블(DERIVED)이 된다.
@@ -529,7 +529,7 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
   - **UNION RESULT**
     - UNION 결과를 담아두는 테이블을 의미한다. 실제 쿼리가 아니기 때문에 id 값이 부여되지 않는다.
   - **SUBQUERY**
-    - FROM 절 외에서 사용되는 서브쿼리를 의미한다.
+    - FROM 절 외에서 사용되는 서브쿼리(ex: select)를 의미한다.
     - FROM 절에 사용된 서브쿼리는 DERIVED로 표시되고 그 밖의 위치에서 사용된 서브쿼리는 SUBQUERY로 표시된다.
   - **DEPENDENT SUBQUERY**
     - 서브쿼리가 SELECT 쿼리에서 정의된 컬럼을 사용하는 경우 표시된다.
