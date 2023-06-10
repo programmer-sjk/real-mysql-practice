@@ -565,3 +565,36 @@ id | select_type | table     |
   - 세번째 라인은 조회하는 테이블을 읽어서 파생 테이블을 생성한다.
   - 첫번째, 두번째 라인은 id가 동일한 걸봐서 조인되는 쿼리인걸 알 수 있다. 그런데 <derived2>가 e보다 위에 있기 때문에
     derived2가 드라이빙 테이블이 되고 e 테이블이 드리븐 테이블이 된다. 즉 <derived2> 테이블을 먼저 읽고 e 테이블을 조인했다.
+
+#### 10.4.4 partitions 컬럼
+
+- MySQL 5.7 버전까지는 옵티마이저가 사용하는 파티션 목록을 EXPLAIN PARTITON 명령을 이용해 확인했다.
+- MySQL 8.0 버전부터는 EXPLAIN 명령으로 파티션 관련 계획까지 확인할 수 있다.
+
+```sql
+create table `tb_range_table` (
+  id int not null,
+  name varchar(10),
+  dept varchar(10),
+  hire_date date not null default '2010-01-01'
+) engine=innodb default charset=utf8mb4
+partition by range(year(hire_date)) (
+partition p0 values less than(2011) engine=innodb,
+partition p1 values less than(2012) engine=innodb,
+partition p2 values less than(2013) engine=innodb,
+partition p3 values less than(2014) engine=innodb,
+partition p999 values less than maxvalue engine=innodb);
+
+SELECT * FROM tb_range_table WHERE hire_date BETWEEN '2012-01-01' AND '2013-12-31';
+```
+
+- 범위 조건을 보면 p1, p2 파티션에 저장된 것을 알 수 있다.
+- 옵티마이저는 쿼리의 조건을 보고 필요한 데이터가 p1, p2에 있다는 것을 알아낼 수 있다. 이처럼 파티션을 골라내는
+과정을 파티션 프루닝(Partition Prunning) 이라고 부른다.
+- 아래 type을 보면 풀테이블 스캔이 발생하는데, 정확히는 p1, p2d에 대해서만 풀 스캔을 실행한다.
+
+```text
+id | select_type | table          | partitons | type |
+-----------------------------------------------------
+1  | SIMPLE      | tb_range_table | p1, p2    | ALL  |
+```
