@@ -537,16 +537,16 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
     - MySQL 5.5 버전까지는 FROM 절에 서브쿼리가 사용된 경우 항상 DERIVED로 표시되지만 5.6 버전부터 최적화가 수행되기도 한다.
     - DERIVED는 단위 쿼리의 실행결과로 메모리나 디스크에 임시 테이블을 생성하는 것을 의미한다.
   - **DEPENDENT DERIVED**
-    - MySQL 8.0 이전에서는 FROM 절의 서브쿼리는 외부 컬럼을 사용할 수 없었는데 8.0 버전부터 레터럴 조인(LATERAL JOIN) 기능이 추가되면서 FROM 절의 서브쿼리가 외부 컬럼을 사용하면 표시된다.
+    - MySQL 8.0 이전에서는 FROM 절의 서브쿼리는 외부 컬럼을 사용할 수 없었는데 8.0 버전부터 `레터럴 조인(LATERAL JOIN)` 기능이 추가되면서 FROM 절의 서브쿼리가 외부 컬럼을 사용하면 표시된다.
   - **UNCACHEABLE SUBQUERY**
     - 하나의 쿼리에 서브쿼리가 하나만 있더라도 그 서브쿼리가 한 번만 실행되는 건 아니다.
     - 조건이 똑같은 서브쿼리가 실행될 때, 서브쿼리 결과를 캐시 공간에 담을 수 있다.
-    - UNCACHEABLE SUBQUERY는 서브쿼리에 포함된 요소에 의해 캐시를 사용하지 못할 경우 표시된다.
+    - `UNCACHEABLE SUBQUERY`는 서브쿼리에 포함된 요소에 의해 캐시를 사용하지 못할 경우 표시된다.
   - **UNCACHEABLE UNION**
     - 캐시를 사용하지 못하는 UNION
   - **MATERIALIZED**
-    - MySQL 5.6 버전부터 도인된 타입으로 주로 FROM, IN 형태의 쿼리에 사용된 서브쿼리의 최적화를 위해 사용된다.
-    - MySQL 5.7 버전부터는 서브쿼리의 내용을 임시 테이블로 구체화(MATERIALIZED는) 한 뒤, 원본 테이블과 조인하는 형태로 최적화되어 처리된다.
+    - MySQL 5.6 버전부터 도입된 타입으로 주로 `FROM, IN` 형태의 쿼리에 사용된 서브쿼리의 최적화를 위해 사용된다.
+    - MySQL 5.7 버전부터는 서브쿼리의 내용을 임시 테이블로 `구체화(MATERIALIZED는)` 한 뒤, 원본 테이블과 조인하는 형태로 최적화되어 처리된다.
 
 #### 10.3.3 table
 
@@ -592,7 +592,7 @@ SELECT * FROM tb_range_table WHERE hire_date BETWEEN '2012-01-01' AND '2013-12-3
 - 범위 조건을 보면 p1, p2 파티션에 저장된 것을 알 수 있다.
 - 옵티마이저는 쿼리의 조건을 보고 필요한 데이터가 p1, p2에 있다는 것을 알아낼 수 있다. 이처럼 파티션을 골라내는
 과정을 `파티션 프루닝(Partition Prunning)` 이라고 부른다.
-- 아래 type을 보면 풀테이블 스캔이 발생하는데, 정확히는 p1, p2d에 대해서만 풀 스캔을 실행한다.
+- 아래 type을 보면 풀테이블 스캔이 발생하는데, 정확히는 p1, p2에 대해서만 풀 스캔을 실행한다.
 
 ```text
 id | select_type | table          | partitons | type |
@@ -617,17 +617,17 @@ id | select_type | table          | partitons | type |
   - PK나 유니크 컬럼으로 조회해서 1건이 나올 떄 처리방식을 const라고 부른다.
   - `SELECT * FROM team WHERE id = 1;`
 - **eq_ref**
-  - 조인 쿼리에서 나타나며, 조인에서 처음 읽은 테이블의 컬럼을 그 다음 읽어야 할 테이블의 PK or 유니크 키 조건으로 사용할 때 eq_ref로 표시된다.
-  - `SELECT * FROM teamUser, user WHERE teamUser.userId =  user.id AND teamUser.teamId = 3`
+  - 조인 쿼리에서 나타나며, 조인에서 처음 읽은 테이블(드라이빙)의 컬럼을 그 다음 읽어야 할 테이블(드리븐)의 PK or 유니크 키 조건으로 사용할 때 eq_ref로 표시된다.
+  - `SELECT * FROM team_user, user WHERE team_user.user_id = user.id AND team_user.team_id = 3`
 - **ref**
-  - eq_ref와 달리 조인 순서랑 관계가 없으며, ref는 레코드가 1건이라는 보장이 없어 const, eq_ref 보다는 느리다.
+  - `eq_ref`와 달리 조인 순서랑 관계가 없으며, ref는 레코드가 1건이라는 보장이 없어 `const, eq_ref` 보다는 느리다.
   - 하지만 동등 조건이기에 빠른 조회 방법 중 하나다.
-  - `SELECT * FROM teamUser WHERE id = 3`
+  - `SELECT * FROM user WHERE id = 3`
 - 위 3가지 방법`(const, eq_ref, ref)`은 성능상에 문제가 없어 넘어가도 무방하다.
 - **full_text**
   - MySQL 서버의 전문 검색 인덱스를 사용해 레코드를 읽는 접근 방법
-  - 전문 검색 조건은 우선순위가 높아서 const, eq_ref, ref가 아니라면 전문 인덱스를 선택한다.
-  - 하지만 저자의 경험상 range가 빨리 처리되는 경우가 많아 전문 검색 쿼리 사용시에는 성능을 확인하는게 좋다.
+  - 전문 검색 조건은 우선순위가 높아서 `const, eq_ref, ref`가 아니라면 전문 인덱스를 선택한다.
+  - 하지만 저자의 경험상 `range`가 빨리 처리되는 경우가 많아 전문 검색 쿼리 사용시에는 성능을 확인하는게 좋다.
 - **ref_or_null**
   - ref + null 비교
 - **unique_subquery**
@@ -643,7 +643,7 @@ id | select_type | table          | partitons | type |
   - Extra 컬럼에 부가적인 내용이 표시됨
 - **index**
   - 인덱스 풀 스캔을 의미하며, 풀 테이블 스캔보다 훨씬 빠르고 효율적이다.
-  - `SELECT * FROM user ORDER BY indexKey LIMIT 10`
+  - `SELECT * FROM user ORDER BY index_key LIMIT 10`
   - LIMIT 조건이 없거나 가져오는 레코드 건수가 많으면 느리다.
 - **ALL**
   - 풀 테이블 스캔으로 위에서 설명한 방식으로 처리할 수 없을때 마지막으로 선택된다.
