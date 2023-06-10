@@ -550,7 +550,7 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
 
 #### 10.3.3 table
 
-- MySQL 서버의 실행계획은 테이블 기준으로 표시된다.
+- MySQL 서버의 실행계획은 **테이블 기준**으로 표시된다.
 
 ```text
 id | select_type | table     |
@@ -568,8 +568,8 @@ id | select_type | table     |
 
 #### 10.4.4 partitions
 
-- MySQL 5.7 버전까지는 옵티마이저가 사용하는 파티션 목록을 EXPLAIN PARTITON 명령을 이용해 확인했다.
-- MySQL 8.0 버전부터는 EXPLAIN 명령으로 파티션 관련 계획까지 확인할 수 있다.
+- **MySQL 5.7** 버전까지는 옵티마이저가 사용하는 파티션 목록을 `EXPLAIN PARTITON` 명령을 이용해 확인했다.
+- **MySQL 8.0** 버전부터는 `EXPLAIN` 명령으로 파티션 관련 계획까지 확인할 수 있다.
 
 ```sql
 create table `tb_range_table` (
@@ -590,7 +590,7 @@ SELECT * FROM tb_range_table WHERE hire_date BETWEEN '2012-01-01' AND '2013-12-3
 
 - 범위 조건을 보면 p1, p2 파티션에 저장된 것을 알 수 있다.
 - 옵티마이저는 쿼리의 조건을 보고 필요한 데이터가 p1, p2에 있다는 것을 알아낼 수 있다. 이처럼 파티션을 골라내는
-과정을 파티션 프루닝(Partition Prunning) 이라고 부른다.
+과정을 `파티션 프루닝(Partition Prunning)` 이라고 부른다.
 - 아래 type을 보면 풀테이블 스캔이 발생하는데, 정확히는 p1, p2d에 대해서만 풀 스캔을 실행한다.
 
 ```text
@@ -601,50 +601,50 @@ id | select_type | table          | partitons | type |
 
 #### 10.3.5 type
 
-- 실행계획에서 type 이후의 컬럼은 테이블의 레코드를 어떤 방식으로 읽었는지를 나타낸다.
-- type은 테이블의 접근 방법을 의미하고, 쿼리 튜닝시 인덱스를 어떻게 사용하는지 확인하는게 중요하므로 type 컬럼은 중요하다.
+- 실행계획에서 **type 이후의 컬럼은** 테이블의 레코드를 어떤 방식으로 읽었는지를 나타낸다.
+- type은 **테이블의 접근 방법**을 의미하고, 쿼리 튜닝시 인덱스를 어떻게 사용하는지 확인하는게 중요하므로 type 컬럼은 중요하다.
 - type 컬럼의 값으로는 아래와 같은 값이 올 수 있다.
   - system, const, eq_ref, ref, fulltext, ref_or_null, unique_subquery, index_subquery, ragne, index
   - index_merge
   - ALL
-- ALL은 풀테이블 스캔 접근 방법을 의미하며 나머지는 인덱스를 사용하는 접근 방법이다.
-- index_merge를 제외한 접근 방법은 하나의 인덱스만 사용한다.
-- system
+- ALL은 풀테이블 스캔 접근 방법을 의미하며 **나머지는 인덱스를 사용**하는 접근 방법이다.
+- `index_merge를` 제외한 접근 방법은 하나의 인덱스만 사용한다.
+- **system**
   - 레코드가 없거나 1건만 존재하는 테이블을 참조하는 형태
   - InnoDB는 나타나지 않고 MyISAM or MEMORY 테이블에서만 사용된다.
-- const
+- **const**
   - PK나 유니크 컬럼으로 조회해서 1건이 나올 떄 처리방식을 const라고 부른다.
   - `SELECT * FROM team WHERE id = 1;`
-- eq_ref
+- **eq_ref**
   - 조인 쿼리에서 나타나며, 조인에서 처음 읽은 테이블의 컬럼을 그 다음 읽어야 할 테이블의 PK or 유니크 키 조건으로 사용할 때 eq_ref로 표시된다.
   - `SELECT * FROM teamUser, user WHERE teamUser.userId =  user.id AND teamUser.teamId = 3`
-- ref
+- **ref**
   - eq_ref와 달리 조인 순서랑 관계가 없으며, ref는 레코드가 1건이라는 보장이 없어 const, eq_ref 보다는 느리다.
   - 하지만 동등 조건이기에 빠른 조회 방법 중 하나다.
   - `SELECT * FROM teamUser WHERE id = 3`
-- 위 3가지 방법(const, eq_ref, ref)은 성능상에 문제가 없어 넘어가도 무방하다.
-- full_text
+- 위 3가지 방법`(const, eq_ref, ref)`은 성능상에 문제가 없어 넘어가도 무방하다.
+- **full_text**
   - MySQL 서버의 전문 검색 인덱스를 사용해 레코드를 읽는 접근 방법
   - 전문 검색 조건은 우선순위가 높아서 const, eq_ref, ref가 아니라면 전문 인덱스를 선택한다.
   - 하지만 저자의 경험상 range가 빨리 처리되는 경우가 많아 전문 검색 쿼리 사용시에는 성능을 확인하는게 좋다.
-- ref_or_null
+- **ref_or_null**
   - ref + null 비교
-- unique_subquery
+- **unique_subquery**
   - where 절에 IN 형태의 쿼리를 위한 접근방법으로 중복되지 않은 유니크를 반환할 때 사용된다.
-- index_subquery
+- **index_subquery**
   - 서브쿼리 결과의 중복된 값을 인덱스를 이용해 제거할 수 있을 때 사용된다.
-- range
+- **range**
   - index range 스캔 형태의 접근 방법이다. 주로 범위로 검색하는 경우 사용된다.
   - range 접근 방법도 상당히 빠른편에 속한다.
-- index_merge
+- **index_merge**
   - 2개 이상의 인덱스를 병합해서 처리하는 방식
   - 여러 인덱스를 읽어야 하므로 range 보다 효율성이 떨어지고 전문 검색 인덱스를 사용하는 곳에서는 적용되지 않는다.
   - Extra 컬럼에 부가적인 내용이 표시됨
-- index
+- **index**
   - 인덱스 풀 스캔을 의미하며, 풀 테이블 스캔보다 훨씬 빠르고 효율적이다.
   - `SELECT * FROM user ORDER BY indexKey LIMIT 10`
   - LIMIT 조건이 없거나 가져오는 레코드 건수가 많으면 느리다.
-- ALL
+- **ALL**
   - 풀 테이블 스캔으로 위에서 설명한 방식으로 처리할 수 없을때 마지막으로 선택된다.
 
 #### 10.3.6 possible_keys
@@ -653,13 +653,13 @@ id | select_type | table          | partitons | type |
 
 #### 10.3.7 key
 
-- 실행된 인덱스를 의미한다.
-- PRIMARY로 표시될 경우 PK가 사용되었다는 의미이며 그 외에는 인덱스의 고유이름이 표기된다.
+- **실행된 인덱스**를 의미한다.
+- `PRIMARY로` 표시될 경우 PK가 사용되었다는 의미이며 그 외에는 인덱스의 고유이름이 표기된다.
 - 실행 계획의 type이 ALL인 경우 key 컬럼은 NULL로 표시된다.
 
 #### 10.3.8 key_len
 
-- 인덱스의 레코드에서 몇 바이트를 사용했는지 알려주는 값이다.
+- 인덱스의 레코드에서 **몇 바이트를 사용**했는지 알려주는 값이다.
 - PK로 (team_id, user_id) 가지는 team_user 테이블이 있다고 가정하자.
 
 ```sql
@@ -715,7 +715,7 @@ id | select_type | table | type   | ref            |
 
 #### 10.3.11 filtered
 
-- 필터링되어 버려지는 레코드 비율이 아니라, 조건절에서 필터링 되고 남은 레코드의 비율을 의미한다.
+- 필터링되어 버려지는 레코드 비율이 아니라, 조건절에서 **필터링 되고 남은 레코드의 비율**을 의미한다.
 
 ```sql
 EXPLAIN SELECT * FROM user u, team_user tu
