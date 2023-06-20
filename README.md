@@ -521,7 +521,7 @@ good. 질문등록 -> 질문유효성 검사 -> 트랜잭션 시작 -> DB에 저
     - **UNION이나 서브쿼리를 사용하는** SELECT 쿼리의 가장 바깥쪽에 있는 단일 쿼리는 PRIMARY로 표시된다.
     - 마찬가지로 PRIMARY인 단위 쿼리는 하나만 존재한다.
   - **UNION**
-    - UNION으로 결합하는 단위 SELECT 쿼리 중 두 번째 이후 단위 SELECT 쿼리는 UNION으로 표시된다.
+    - UNION으로 결합하는 단위 SELECT 쿼리 중 **두 번째 이후 단위 SELECT 쿼리**는 UNION으로 표시된다.
     - UNION의 첫번째 단위 SELECT는 쿼리 결과들을 모아 저장하는 임시테이블(DERIVED)이 된다.
   - **DEPENDENT UNION**
     - DEPENDENT는 UNION, UNION ALL로 결합한 단위 쿼리가 외부 쿼리에 의해 영향을 받는 것을 의미한다.
