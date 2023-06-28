@@ -735,45 +735,45 @@ id | select_type | table | type | rows | filtered |
 
 - 쿼리 실행 계획 중 성능에 관련된 중요한 내용이 Extra 컬럼에 자주 표시된다. Extra 컬럼에는 내부적인 처리
 알고리즘에 대해 깊이 있는 내용을 보여주는 경우가 많다.
-- const row not found
+- **const row not found**
   - 쿼리 실행계획에서 const 접근 방법으로 테이블을 읽었지만 실제로 해당 테이블에 레코드가 1건도 존재하지 않으면 표시된다.
-- Deleting all rows
+- **Deleting all rows**
   - where 조건절이 없는 DELETE 문장의 실행계획에서 자주 표시되며, 쿼리를 한 번 호출하여 모든 레코드를 삭제했다는 의미이다.
-- impossible having
+- **impossible having**
   - 쿼리에 사용된 Having 절의 조건을 만족하는 레코드가 없을 때 실행 계획의 Extra 컬럼에 표시된다.
-- impossible where
+- **impossible where**
   - where 조건이 항상 false가 될 수 밖에 없는 경우 표시된다.
-- LooseScan
+- **LooseScan**
   - 세미 조인 최적화 중에서 LooseScan 최적화 전략이 사용되면 표시된다.
-- No matching min/max row
+- **No matching min/max row**
   - min, max 같은 집합 함수가 있는 쿼리의 조건절에 일치하는 레코드가 없을 때 표시된다.
-- no matching row in const table
+- **no matching row in const table**
   - 조인에 사용된 테이블에서 const 방법으로 접근할 때 일치하는 레코드가 없다면 표시된다.
-- no matching rows after partition pruning
+- **no matching rows after partition pruning**
   - 파티션에서 update하거나 delete 할 대상 레코드가 없을 때 표시된다.
-- not exists
+- **not exists**
   - 개발하다 보면 A 테이블에는 있지만 B 테이블에 없는 값을 조회해야 하는 쿼리가 사용된다. 주로 not in, not exist 형태를 사용하는데 이러한 형태를 안티 조인이라고 한다.
   - 똑같은 조인을 outer 조인을 이용해서 구현할 수 있다. 레코드 건수가 많을 때는 아우터 조인을 이용하면 빠른 성능을 낼 수 있다.
   - 이렇게 아우터 조인을 이용해 안티 조인을 수행하는 쿼리에서는 실행 계획의 extra 컬럼에 표시된다.
-- recursive
+- **recursive**
   - MySQL 8.0 버전부터 CTE(Common Table Expression)를 이용해 재귀 쿼리를 작성할 수 있는데 이 경우 표시된다.
-- Rematerialize
+- **Rematerialize**
   - MySQL 8.0 버전부터 래터럴 조인 기능이 추가됐는데, 래터럴로 조인되는 테이블은 선행 테이블의 레코드별로 서브 쿼리를 실행해서 그 결과를 임시 테이블에 저장한다. 이 과정을 rematerializing 이라고 한다.
-- Select tables optimized away
+- **Select tables optimized away**
   - MIN, MAX만 SELECT 절에 사용되거나 GROUP BY로 MIN, MAX를 조회하는 쿼리가 인덱스를 오름차순/내림차순으로 1건만 읽는 형태의 최적화가 적용되면 표시된다.
-- Start temporary, End temporary
+- **Start temporary, End temporary**
   - 세미 조인 최적화 중에서 Duplicate Weed-out 최적화 전략이 사용되면 표시된다.
-- Using filesort
+- **Using filesort**
   - order by 처리가 인덱스를 사용하지 못할 때만 표시되며, 정렬용 메모리 버퍼에 복사해 퀵 소트 or 힙 소트 알고리즘을 이용해 정렬을 수행하게 된다는 의미다. 이 실행계획은 order by가 사용된 쿼리에만 나타난다.
-- Using index (커버링 인덱스)
+- **Using index (커버링 인덱스)**
   - 데이터 파일을 전혀 읽지 않고 인덱스만 읽어서 쿼리를 모두 처리할 수 있을 때 Extra 컬럼에 Using index가 표시된다.
   - InnoDB의 모든 테이블은 클러스터링 인덱스로 구성되어, 모든 세컨더리 인덱스는 데이터 레코드의 주소값으로 프라이머리 키 값을 가진다. 이러한 특성으로 PK와 세컨더리 인덱스를 사용하는 쿼리는 커버링 인덱스로 처리될 가능성이 높다. 즉 세컨더리 인덱스에는 데이터 레코드를 찾아가기 위한 주소로 사용하기 위해 PK를 저장해 두는 것이지만 추가 컬럼을 하나 더 가지는 효과를 얻을 수 있다.
   - 레코드 건수에 따라 차이는 있겠지만 쿼리를 커버링 인덱스로 처리할 수 있을 때와 없을 때는 수십배, 수백배 까지 차이가 날 수 있다. 하지만 무조건 커버링 인덱스로 처리하려고 인덱스를 추가하면 쓰기 작업이 매우 느려질 수 있으니 알고 있어야 한다.
-- Using index for group-by
+- **Using index for group-by**
   - MySQL 서버는 Group by 처리를 위해 그루핑 기준 컬럼을 이용해 정렬을 수행하고, 정렬된 결과를 그루핑하는 형태의 고부하 작업을 한다.
   - 하지만 group by가 인덱스를 이용하면 정렬된 인덱스 컬럼을 순서대로 읽으면서 그루핑 작업만 수행하는데, 이 때 표시된다.
-- Using join buffer
+- **Using join buffer**
   - 일반적으로 조인되는 컬럼은 인덱스를 생성한다. 실제로 조인에 필요한 인덱스는, 양쪽 모두가 필요한게 아니라 조인에서 뒤에 읽는 테이블의 칼럼에만 필요하다. 옵티마이저도 두 테이블에 있는 컬럼에서 인덱스를 조사하고 인덱스가 없는 테이블이 있으면 그 테이블을 먼저 읽어서 조인을 실행한다. 드리븐 테이블이 검색 위주로 사용되기 때문에 인덱스가 없다면 성능에 영향이 크기 때문이다.
   - 드리븐 테이블에 검색을 위한 적절한 인덱스가 없다면 MySQL 서버는 블록 네스티드 루프 조인이나 해시 조인을 사용하며 이때 조인 버퍼를 사용하게 된다.
-- Using temporary
+- **Using temporary**
   - 쿼리를 처리하는 동안 중간 결과를 담아두기 위해 임시 테이블을 사용한다. 임시 테이블은 메모리 or 디스크상에 생성될 수 있다. Extra 컬럼에 Using temporary 키워드가 뜨면 임시 테이블을 사용한 것인데 이때 임시 테이블이 메모리에 생성됐는지 디스크에 생성됐는지는 판단할 수 없다.
